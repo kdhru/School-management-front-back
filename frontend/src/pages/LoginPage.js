@@ -1,37 +1,62 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
 import {
   Button,
-  Grid,
   Box,
   Typography,
-  Checkbox,
-  FormControlLabel,
   TextField,
   CssBaseline,
   IconButton,
   InputAdornment,
   CircularProgress,
-  Backdrop
-} from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { motion } from "framer-motion";
-import styled from 'styled-components';
+  Backdrop,
+  Paper,
+  Link
+} from "@mui/material";
+
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
+import { loginUser } from "../redux/userRelated/userHandle";
+import Popup from "../components/Popup";
 import bgpic from "../assets/designlogin.jpg";
 
-import { loginUser } from '../redux/userRelated/userHandle';
-import Popup from '../components/Popup';
 
-const defaultTheme = createTheme();
+
+/* ================= THEME CONFIG ================= */
+
+const getDesignTokens = (mode) => ({
+  palette: {
+    mode,
+    ...(mode === "light"
+      ? {
+          background: {
+            default: "#f3e8ff",
+            paper: "#ffffff",
+          },
+        }
+      : {
+          background: {
+            default: "#0f172a",
+            paper: "#1e293b",
+          },
+        }),
+  },
+});
+
+
+
+/* ================= COMPONENT ================= */
 
 const LoginPage = ({ role }) => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { status, currentUser, response, currentRole } = useSelector(state => state.user);
+  const { status, currentUser, response, currentRole } =
+    useSelector((state) => state.user);
 
   const [toggle, setToggle] = useState(false);
   const [guestLoader, setGuestLoader] = useState(false);
@@ -43,6 +68,22 @@ const LoginPage = ({ role }) => {
   const [passwordError, setPasswordError] = useState(false);
   const [rollNumberError, setRollNumberError] = useState(false);
   const [studentNameError, setStudentNameError] = useState(false);
+
+  /* ================= THEME STATE ================= */
+
+  const [mode, setMode] = useState(
+    localStorage.getItem("themeMode") || "light"
+  );
+
+  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+  const toggleTheme = () => {
+    const newMode = mode === "light" ? "dark" : "light";
+    setMode(newMode);
+    localStorage.setItem("themeMode", newMode);
+  };
+
+  /* ================= FORM SUBMIT ================= */
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -78,10 +119,10 @@ const LoginPage = ({ role }) => {
 
   const handleInputChange = (event) => {
     const { name } = event.target;
-    if (name === 'email') setEmailError(false);
-    if (name === 'password') setPasswordError(false);
-    if (name === 'rollNumber') setRollNumberError(false);
-    if (name === 'studentName') setStudentNameError(false);
+    if (name === "email") setEmailError(false);
+    if (name === "password") setPasswordError(false);
+    if (name === "rollNumber") setRollNumberError(false);
+    if (name === "studentName") setStudentNameError(false);
   };
 
   const guestModeHandler = () => {
@@ -90,7 +131,10 @@ const LoginPage = ({ role }) => {
     if (role === "Admin") {
       dispatch(loginUser({ email: "yogendra@12", password }, role));
     } else if (role === "Student") {
-      dispatch(loginUser({ rollNum: "1", studentName: "Dipesh Awasthi", password }, role));
+      dispatch(loginUser(
+        { rollNum: "1", studentName: "Dipesh Awasthi", password },
+        role
+      ));
     } else if (role === "Teacher") {
       dispatch(loginUser({ email: "tony@12", password }, role));
     }
@@ -98,18 +142,18 @@ const LoginPage = ({ role }) => {
     setGuestLoader(true);
   };
 
+  /* ================= NAVIGATION EFFECT ================= */
+
   useEffect(() => {
-    if (status === 'success' || currentUser !== null) {
-      if (currentRole === 'Admin') navigate('/Admin/dashboard');
-      else if (currentRole === 'Student') navigate('/Student/dashboard');
-      else if (currentRole === 'Teacher') navigate('/Teacher/dashboard');
-    }
-    else if (status === 'failed') {
+    if (status === "success" || currentUser !== null) {
+      if (currentRole === "Admin") navigate("/Admin/dashboard");
+      else if (currentRole === "Student") navigate("/Student/dashboard");
+      else if (currentRole === "Teacher") navigate("/Teacher/dashboard");
+    } else if (status === "failed") {
       setMessage(response);
       setShowPopup(true);
       setLoader(false);
-    }
-    else if (status === 'error') {
+    } else if (status === "error") {
       setMessage("Network Error");
       setShowPopup(true);
       setLoader(false);
@@ -117,57 +161,79 @@ const LoginPage = ({ role }) => {
     }
   }, [status, currentRole, navigate, response, currentUser]);
 
-  return (
-    <ThemeProvider theme={defaultTheme}>
-      <Grid container component="main" sx={{ height: '100vh' }}>
-        <CssBaseline />
 
-        {/* LEFT SIDE LOGIN PANEL */}
-        <Grid
-          item
-          xs={12}
-          sm={8}
-          md={5}
-          component={motion.div}
-          initial={{ opacity: 0, x: -80 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
+
+  /* ================= UI ================= */
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background:
+            mode === "light"
+              ? "linear-gradient(135deg,#e9d5ff,#f3e8ff)"
+              : "linear-gradient(135deg,#0f172a,#1e293b)",
+          transition: "0.4s ease"
+        }}
+      >
+
+        {/* THEME TOGGLE */}
+        <IconButton
+          onClick={toggleTheme}
           sx={{
-            backdropFilter: "blur(20px)",
-            background: "rgba(255,255,255,0.85)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 15px 40px rgba(0,0,0,0.2)"
+            position: "absolute",
+            top: 20,
+            right: 20,
+            backgroundColor: mode === "light" ? "#fff" : "#1e293b",
+            boxShadow: 3
           }}
         >
-          <Box sx={{ width: "80%" }}>
-            <Typography
-              variant="h4"
-              component={motion.h4}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              sx={{
-                fontWeight: 700,
-                mb: 1,
-                background: "linear-gradient(90deg,#7f56da,#2c2143)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}
-            >
-              {role} Login
+          {mode === "light" ? "🌙" : "☀️"}
+        </IconButton>
+
+        <Paper
+          elevation={12}
+          sx={{
+            width: "900px",
+            maxWidth: "95%",
+            height: "550px",
+            display: "flex",
+            borderRadius: "20px",
+            overflow: "hidden",
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+            transition: "0.4s ease"
+          }}
+        >
+
+          {/* LEFT SIDE FORM */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: "50%" },
+              p: 6,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="h4" fontWeight={700} gutterBottom>
+              Log In
             </Typography>
 
-            <Typography sx={{ mb: 3, color: "#555" }}>
+            <Typography variant="body2" color="text.secondary" mb={3}>
               Welcome back! Please enter your details
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit}>
-
               {role === "Student" ? (
                 <>
-                  <StyledTextField
+                  <TextField
                     fullWidth
                     margin="normal"
                     label="Roll Number"
@@ -176,7 +242,7 @@ const LoginPage = ({ role }) => {
                     helperText={rollNumberError && "Required"}
                     onChange={handleInputChange}
                   />
-                  <StyledTextField
+                  <TextField
                     fullWidth
                     margin="normal"
                     label="Student Name"
@@ -187,7 +253,7 @@ const LoginPage = ({ role }) => {
                   />
                 </>
               ) : (
-                <StyledTextField
+                <TextField
                   fullWidth
                   margin="normal"
                   label="Email"
@@ -198,7 +264,7 @@ const LoginPage = ({ role }) => {
                 />
               )}
 
-              <StyledTextField
+              <TextField
                 fullWidth
                 margin="normal"
                 label="Password"
@@ -214,110 +280,89 @@ const LoginPage = ({ role }) => {
                         {toggle ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
 
-              <FormControlLabel
-                control={<Checkbox />}
-                label="Remember me"
-              />
-
-              <GradientButton
+              <Button
                 type="submit"
                 fullWidth
+                variant="contained"
+                sx={{
+                  mt: 3,
+                  py: 1.2,
+                  borderRadius: "8px",
+                  background:
+                    mode === "light"
+                      ? "linear-gradient(90deg,#a855f7,#9333ea)"
+                      : "linear-gradient(90deg,#7c3aed,#4c1d95)",
+                }}
               >
-                {loader ? <CircularProgress size={24} color="inherit" /> : "Login"}
-              </GradientButton>
+                {loader ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Log In"
+                )}
+              </Button>
 
-              <OutlinedButton
+              <Button
                 fullWidth
+                variant="outlined"
+                sx={{ mt: 2 }}
                 onClick={guestModeHandler}
               >
                 Login as Guest
-              </OutlinedButton>
+              </Button>
 
+              <Typography
+                variant="body2"
+                sx={{ textAlign: "center", mt: 3 }}
+              >
+                Don't have account?{" "}
+                <Link href="/Adminregister">Sign up</Link>
+              </Typography>
             </Box>
           </Box>
-        </Grid>
 
-        {/* RIGHT SIDE BACKGROUND */}
-        <Grid
-          item
-          xs={false}
-          sm={4}
-          md={7}
-          sx={{
-            position: "relative",
-            backgroundImage: `url(${bgpic})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              background: "linear-gradient(135deg, rgba(127,86,218,0.6), rgba(44,33,67,0.7))"
-            }
-          }}
+          {/* RIGHT SIDE IMAGE */}
+          <Box
+            sx={{
+              width: "50%",
+              display: { xs: "none", md: "block" },
+              background:
+                mode === "light"
+                  ? "linear-gradient(135deg,#c084fc,#9333ea)"
+                  : "linear-gradient(135deg,#4c1d95,#1e1b4b)",
+            }}
+          >
+            <Box
+              component="img"
+              src={bgpic}
+              alt="login"
+              sx={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                mixBlendMode: "multiply",
+                opacity: 0.9,
+              }}
+            />
+          </Box>
+
+        </Paper>
+
+        <Backdrop open={guestLoader} sx={{ color: "#fff" }}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+
+        <Popup
+          message={message}
+          setShowPopup={setShowPopup}
+          showPopup={showPopup}
         />
-
-      </Grid>
-
-      <Backdrop open={guestLoader} sx={{ color: '#fff' }}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
-
-      <Popup message={message} setShowPopup={setShowPopup} showPopup={showPopup} />
+      </Box>
     </ThemeProvider>
   );
 };
 
 export default LoginPage;
-
-
-/* ---------------- Styled Components ---------------- */
-
-const StyledTextField = styled(TextField)`
-  & .MuiOutlinedInput-root {
-    border-radius: 12px;
-    transition: 0.3s;
-
-    &:hover fieldset {
-      border-color: #7f56da;
-    }
-
-    &.Mui-focused fieldset {
-      border-color: #7f56da;
-      box-shadow: 0 0 8px rgba(127,86,218,0.4);
-    }
-  }
-`;
-
-const GradientButton = styled(Button)`
-  margin-top: 20px !important;
-  padding: 10px !important;
-  font-weight: 600 !important;
-  border-radius: 12px !important;
-  color: white !important;
-  background: linear-gradient(135deg, #7f56da, #5a3fc0) !important;
-  transition: 0.3s !important;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(127,86,218,0.4);
-  }
-`;
-
-const OutlinedButton = styled(Button)`
-  margin-top: 15px !important;
-  border-radius: 12px !important;
-  border: 2px solid #7f56da !important;
-  color: #7f56da !important;
-  transition: 0.3s !important;
-
-  &:hover {
-    background: #f3edff !important;
-    transform: translateY(-2px);
-  }
-`;

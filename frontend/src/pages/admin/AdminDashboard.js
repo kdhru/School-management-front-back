@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
     CssBaseline,
     Box,
@@ -10,7 +10,10 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { AppBar, Drawer } from '../../components/styles';
 import Logout from '../Logout';
 import SideBar from './SideBar';
@@ -44,41 +47,102 @@ import AccountMenu from '../../components/AccountMenu';
 
 const AdminDashboard = () => {
     const [open, setOpen] = useState(false);
+    const [mode, setMode] = useState("light");
+
+    const theme = useMemo(
+        () =>
+            createTheme({
+                palette: {
+                    mode,
+                },
+            }),
+        [mode]
+    );
+
     const toggleDrawer = () => {
         setOpen(!open);
     };
 
+    const toggleTheme = () => {
+        setMode((prev) => (prev === "light" ? "dark" : "light"));
+    };
+
     return (
-        <>
+        <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex' }}>
                 <CssBaseline />
-                <AppBar open={open} position='absolute'>
-                    <Toolbar sx={{ pr: '24px' }}>
+
+                {/* 🔹 App Bar */}
+                <AppBar
+                    open={open}
+                    position="absolute"
+                    sx={{
+                        backdropFilter: "blur(10px)",
+                        backgroundColor: (theme) =>
+                            theme.palette.mode === "light"
+                                ? "rgba(255,255,255,0.85)"
+                                : "rgba(25,25,25,0.85)",
+                        color: (theme) =>
+                            theme.palette.mode === "light"
+                                ? theme.palette.text.primary
+                                : "#fff",
+                        boxShadow: "none",
+                        borderBottom: (theme) =>
+                            `1px solid ${theme.palette.divider}`,
+                    }}
+                >
+                    <Toolbar sx={{ pr: 2, minHeight: 56 }}>
                         <IconButton
                             edge="start"
                             color="inherit"
-                            aria-label="open drawer"
                             onClick={toggleDrawer}
                             sx={{
-                                marginRight: '36px',
+                                mr: 2,
                                 ...(open && { display: 'none' }),
                             }}
                         >
                             <MenuIcon />
                         </IconButton>
+
                         <Typography
                             component="h1"
                             variant="h6"
-                            color="inherit"
                             noWrap
-                            sx={{ flexGrow: 1 }}
+                            sx={{ flexGrow: 1, fontSize: "1rem" }}
                         >
                             Admin Dashboard
                         </Typography>
+
+                        {/* 🔹 Theme Toggle Button */}
+                        <IconButton color="inherit" onClick={toggleTheme}>
+                            {mode === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
+                        </IconButton>
+
                         <AccountMenu />
                     </Toolbar>
                 </AppBar>
-                <Drawer variant="permanent" open={open} sx={open ? styles.drawerStyled : styles.hideDrawer}>
+
+                {/* 🔹 Drawer */}
+                <Drawer
+                    variant="permanent"
+                    open={open}
+                    sx={{
+                        '& .MuiDrawer-paper': {
+                            width: open ? 220 : 70,
+                            transition: "0.3s",
+                            backgroundColor: (theme) =>
+                                theme.palette.mode === "light"
+                                    ? "#ffffff"
+                                    : "#1e1e1e",
+                            color: (theme) =>
+                                theme.palette.mode === "light"
+                                    ? theme.palette.text.primary
+                                    : "#fff",
+                            borderRight: (theme) =>
+                                `1px solid ${theme.palette.divider}`,
+                        },
+                    }}
+                >
                     <Toolbar sx={styles.toolBarStyled}>
                         <IconButton onClick={toggleDrawer}>
                             <ChevronLeftIcon />
@@ -89,11 +153,13 @@ const AdminDashboard = () => {
                         <SideBar />
                     </List>
                 </Drawer>
+
+                {/* 🔹 Main Content */}
                 <Box component="main" sx={styles.boxStyled}>
                     <Toolbar />
                     <Routes>
                         <Route path="/" element={<AdminHomePage />} />
-                        <Route path='*' element={<Navigate to="/" />} />
+                        <Route path="*" element={<Navigate to="/" />} />
                         <Route path="/Admin/dashboard" element={<AdminHomePage />} />
                         <Route path="/Admin/profile" element={<AdminProfile />} />
                         <Route path="/Admin/complains" element={<SeeComplains />} />
@@ -106,10 +172,8 @@ const AdminDashboard = () => {
                         <Route path="/Admin/subjects" element={<ShowSubjects />} />
                         <Route path="/Admin/subjects/subject/:classID/:subjectID" element={<ViewSubject />} />
                         <Route path="/Admin/subjects/chooseclass" element={<ChooseClass situation="Subject" />} />
-
                         <Route path="/Admin/addsubject/:id" element={<SubjectForm />} />
                         <Route path="/Admin/class/subject/:classID/:subjectID" element={<ViewSubject />} />
-
                         <Route path="/Admin/subject/student/attendance/:studentID/:subjectID" element={<StudentAttendance situation="Subject" />} />
                         <Route path="/Admin/subject/student/marks/:studentID/:subjectID" element={<StudentExamMarks situation="Subject" />} />
 
@@ -138,35 +202,28 @@ const AdminDashboard = () => {
                     </Routes>
                 </Box>
             </Box>
-        </>
+        </ThemeProvider>
     );
-}
+};
 
-export default AdminDashboard
+export default AdminDashboard;
 
 const styles = {
     boxStyled: {
         backgroundColor: (theme) =>
             theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
+                ? '#f5f7fa'
+                : '#121212',
         flexGrow: 1,
         height: '100vh',
         overflow: 'auto',
+        padding: 2,
     },
     toolBarStyled: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
-        px: [1],
+        px: 1,
+        minHeight: 48,
     },
-    drawerStyled: {
-        display: "flex"
-    },
-    hideDrawer: {
-        display: 'flex',
-        '@media (max-width: 600px)': {
-            display: 'none',
-        },
-    },
-}
+};
